@@ -8,7 +8,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search for themes (e.g., 'pop', 'rock', 'hip hop')..."
+          placeholder="Recherchez des thèmes musicaux (ex: 'pop', 'rock', 'rap')..."
           class="input w-full pl-10"
           @input="onSearchInput"
         />
@@ -28,7 +28,7 @@
     <div v-else-if="error" class="text-red-500 text-center py-4">
       <p>{{ error }}</p>
       <button 
-        @click="loadThemes" 
+        @click="onRetryClick" 
         class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
       >
         Retry
@@ -68,13 +68,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useGameStore } from '@/stores/gameStore'
-import deezerApi from '@/services/deezerApi'
+import { ref } from 'vue'
+import { useGameStore } from '../../stores/gameStore'
+import deezerApi from '../../services/deezerApi'
 
 const gameStore = useGameStore()
 
-const themes = ref([])
+interface Theme {
+  id: number
+  title: string
+  picture?: string
+  picture_medium?: string
+  nb_tracks?: number
+}
+
+const themes = ref<Theme[]>([])
 const loading = ref(false)
 const error = ref('')
 const selectedThemes = ref<number[]>([])
@@ -97,6 +105,10 @@ const loadThemes = async (query: string = 'popular') => {
   }
 }
 
+const onRetryClick = () => {
+  loadThemes()
+}
+
 const onSearchInput = () => {
   // Clear previous timeout
   if (searchTimeout.value) {
@@ -105,8 +117,10 @@ const onSearchInput = () => {
   
   // Set new timeout to avoid too many API calls
   searchTimeout.value = setTimeout(() => {
-    const query = searchQuery.value.trim() || 'popular'
-    loadThemes(query)
+    const query = searchQuery.value.trim()
+    if (query) { // Ne charger que si la recherche n'est pas vide
+      loadThemes(query)
+    }
   }, 500) as unknown as number
 }
 
@@ -120,15 +134,22 @@ const toggleTheme = (themeId: number) => {
 }
 
 const confirmSelection = () => {
-  const selectedThemeObjects = themes.value.filter(theme => 
-    selectedThemes.value.includes(theme.id)
-  )
+  const selectedThemeObjects = themes.value
+    .filter(theme => selectedThemes.value.includes(theme.id))
+    .map(theme => ({
+      id: theme.id,
+      title: theme.title,
+      picture: theme.picture || '',
+      tracklist: (theme as any).tracklist || '',
+      nb_tracks: theme.nb_tracks || 0
+    }))
   gameStore.setSelectedThemes(selectedThemeObjects)
 }
 
-onMounted(() => {
-  loadThemes()
-})
+// Ne pas charger de thèmes automatiquement au montage
+// onMounted(() => {
+//   loadThemes()
+// })
 </script>
 
 <style scoped>

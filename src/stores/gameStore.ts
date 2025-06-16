@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Theme, Song, GameSettings, GameResult, AnswerMode } from '../types'
+import type { Theme, Song, GameSettings, GameResult } from '../types'
 
 export const useGameStore = defineStore('game', () => {
   // Game settings
@@ -84,26 +84,43 @@ export const useGameStore = defineStore('game', () => {
   function markCorrectAnswer(timeRemaining: number) {
     foundCorrectAnswer.value = true
     correctAnswerTime.value = timeRemaining
-  }
-  
-  function timeUp(timeRemaining: number) {
-    timeIsUp.value = true
-    isPlaying.value = false
     
+    // Ajouter immédiatement le score lorsque la réponse est correcte
     if (currentSong.value) {
-      // Use the stored correct answer time if answer was found, otherwise 0
-      const finalTime = foundCorrectAnswer.value ? correctAnswerTime.value : 0
-      const score = foundCorrectAnswer.value ? getCurrentScore(correctAnswerTime.value) : 0
-      
+      const score = getCurrentScore(timeRemaining)
       scores.value.push({
         songId: currentSong.value.id,
         songTitle: currentSong.value.title,
         artistName: currentSong.value.artist.name,
-        userAnswer: foundCorrectAnswer.value ? userAnswer.value : '',
-        isCorrect: foundCorrectAnswer.value,
+        userAnswer: userAnswer.value,
+        isCorrect: true,
         score: score,
-        timeRemaining: finalTime
+        timeRemaining: timeRemaining
       })
+    }
+  }
+  
+  function timeUp() {
+    timeIsUp.value = true
+    isPlaying.value = false
+    
+    if (currentSong.value) {
+      // Si la réponse correcte a déjà été trouvée, ne pas ajouter de points supplémentaires
+      if (!foundCorrectAnswer.value) {
+        // Aucune réponse correcte n'a été trouvée, score = 0
+        scores.value.push({
+          songId: currentSong.value.id,
+          songTitle: currentSong.value.title,
+          artistName: currentSong.value.artist.name,
+          userAnswer: '',
+          isCorrect: false,
+          score: 0,
+          timeRemaining: 0
+        })
+      } else {
+        // La réponse correcte a déjà été enregistrée avec markCorrectAnswer,
+        // ne pas ajouter d'entrée de score ici
+      }
     }
   }
   

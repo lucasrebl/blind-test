@@ -59,7 +59,7 @@ export async function searchPlaylists(query: string = 'popular'): Promise<Theme[
     const data = await tryApiCall('/search/playlist', {
       q: query,
       limit: 25,
-    })
+    }) as { data: Theme[] }
     
     console.log('Search response:', data)
     
@@ -84,7 +84,7 @@ export async function getPlaylistTracks(playlistId: number): Promise<Song[]> {
     
     const data = await tryApiCall(`/playlist/${playlistId}/tracks`, {
       limit: 100
-    })
+    }) as { data: Song[] }
     
     // Filter tracks to ensure they have preview URLs and are valid
     const validTracks = (data.data || []).filter((track: Song) => {
@@ -108,7 +108,7 @@ export async function getPlaylistTracks(playlistId: number): Promise<Song[]> {
 export async function getPlaylistById(playlistId: number): Promise<Theme | null> {
   try {
     const data = await tryApiCall(`/playlist/${playlistId}`)
-    return data
+    return data as Theme
   } catch (error) {
     console.error(`Error fetching playlist ${playlistId}:`, error)
     return null
@@ -121,7 +121,7 @@ export async function getChartPlaylists(): Promise<Theme[]> {
     
     const data = await tryApiCall('/chart/0/playlists', {
       limit: 25
-    })
+    }) as { data: Theme[] }
     
     // Filter playlists to ensure they have enough tracks
     const playlists = (data.data || []).filter((playlist: Theme) => 
