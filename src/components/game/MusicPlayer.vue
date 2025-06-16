@@ -2,6 +2,7 @@
 import { ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/gameStore'
+import Modal from '../ui/Modal.vue'
 
 const props = defineProps<{
   audioUrl: string
@@ -16,6 +17,9 @@ const isPlaying = ref(false)
 const progress = ref(0)
 const remainingTime = ref(30)
 const timerInterval = ref<number | null>(null)
+
+// État pour la modal
+const showStopGameModal = ref(false)
 
 // Create audio element
 function createAudio() {
@@ -51,7 +55,7 @@ function startTimer() {
       // Time is up - stop everything and notify the game
       stopTimer()
       stopAudio()
-      gameStore.timeUp(0)
+      gameStore.timeUp()
     }
   }, 1000) as unknown as number
 }
@@ -85,7 +89,9 @@ function stopAudio() {
     isPlaying.value = false
   }
   
-  stopTimer()
+  // Nous ne voulons pas arrêter le timer ici, car cela pourrait causer des problèmes
+  // si l'utilisateur annule la confirmation d'arrêt
+  // stopTimer() - Supprimé pour éviter le bug
 }
 
 // Update progress
@@ -97,19 +103,37 @@ function updateProgress() {
 
 // Stop game and go home
 function stopGame() {
-  if (confirm('Êtes-vous sûr de vouloir arrêter la partie ? Votre progression sera perdue.')) {
-    stopAudio()
-    stopTimer()
+  showStopGameModal.value = true
+}
+
+// Fonction pour confirmer l'arrêt du jeu
+function confirmStopGame() {
+  // Arrêter complètement le jeu
+  cleanUpAudio()
+  gameStore.resetGame()
+  router.push('/')
+  showStopGameModal.value = false
+}
+
+// Fonction pour annuler l'arrêt du jeu
+function cancelStopGame() {
+  showStopGameModal.value = false
+}
+
+// Fonction séparée pour nettoyer proprement l'audio
+function cleanUpAudio() {
+  stopTimer()
+  
+  if (audio.value) {
+    audio.value.pause()
+    audio.value.currentTime = 0
+    isPlaying.value = false
     
-    if (audio.value) {
-      audio.value.removeEventListener('loadeddata', playAudio)
-      audio.value.removeEventListener('timeupdate', updateProgress)
-      audio.value.removeEventListener('ended', stopAudio)
-      audio.value = null
-    }
-    
-    gameStore.resetGame()
-    router.push('/')
+    // Suppression des écouteurs d'événements
+    audio.value.removeEventListener('loadeddata', playAudio)
+    audio.value.removeEventListener('timeupdate', updateProgress)
+    audio.value.removeEventListener('ended', stopAudio)
+    audio.value = null
   }
 }
 
@@ -127,14 +151,7 @@ watch(() => props.audioUrl, () => {
 
 // Clean up on component unmount
 onUnmounted(() => {
-  stopAudio()
-  stopTimer()
-  
-  if (audio.value) {
-    audio.value.removeEventListener('loadeddata', playAudio)
-    audio.value.removeEventListener('timeupdate', updateProgress)
-    audio.value.removeEventListener('ended', stopAudio)
-  }
+  cleanUpAudio()
 })
 
 // Initialize audio on component mount
@@ -208,6 +225,16 @@ createAudio()
         <span>Stop</span>
       </button>
     </div>
+    
+    <!-- Modal de confirmation pour arrêter le jeu -->
+    <Modal 
+      :show="showStopGameModal" 
+      title="Arrêter la partie"
+      @close="cancelStopGame"
+      @confirm="confirmStopGame"
+    >
+      <p>Êtes-vous sûr de vouloir arrêter la partie ? Votre progression sera perdue.</p>
+    </Modal>
   </div>
 </template>
 
