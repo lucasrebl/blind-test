@@ -18,6 +18,9 @@ const accuracy = computed(() => {
     : 0
 })
 
+// Détermine si c'est une victoire par score ou par épuisement des musiques
+const isVictory = computed(() => gameStore.isVictory)
+
 // Format time remaining to seconds
 function formatTimeRemaining(time: number): string {
   return `${time}s`
@@ -40,9 +43,9 @@ onMounted(() => {
 <template>
   <div class="container mx-auto px-4 py-8">
     <div class="max-w-4xl mx-auto">
-      <!-- Victory header with confetti animation -->
+      <!-- Header with confetti animation (seulement pour les victoires) -->
       <div class="text-center mb-12 relative">
-        <div class="confetti-container absolute top-0 left-0 w-full h-32 overflow-hidden">
+        <div v-if="isVictory" class="confetti-container absolute top-0 left-0 w-full h-32 overflow-hidden">
           <div v-for="i in 50" :key="i" class="confetti" 
             :style="{
               left: `${Math.random() * 100}%`,
@@ -55,10 +58,15 @@ onMounted(() => {
           ></div>
         </div>
         
-        <h1 class="text-5xl font-bold text-primary-700 mb-4">Game Complete!</h1>
-        <p class="text-xl text-gray-600">Your final score: <span class="font-bold text-2xl text-primary-600">{{ totalScore }}</span></p>
+        <h1 class="text-5xl font-bold mb-4" :class="isVictory ? 'text-primary-700' : 'text-gray-700'">
+          {{ isVictory ? 'Game Complete!' : 'Game Over!' }}
+        </h1>
+        <p class="text-xl text-gray-600">Your final score: <span class="font-bold text-2xl" :class="isVictory ? 'text-primary-600' : 'text-secondary-600'">{{ totalScore }}</span></p>
+        <p v-if="!isVictory" class="text-lg text-gray-600 mt-2">
+          You didn't reach {{ gameStore.settings.maxPoints }} points, but you went through all available songs!
+        </p>
         <p class="text-lg text-gray-600">
-          You got <span class="font-bold text-primary-600">{{ correctAnswers }}</span> out of <span class="font-bold">{{ totalQuestions }}</span> correct
+          You got <span class="font-bold" :class="isVictory ? 'text-primary-600' : 'text-secondary-600'">{{ correctAnswers }}</span> out of <span class="font-bold">{{ totalQuestions }}</span> correct
           (<span class="font-bold">{{ accuracy }}%</span> accuracy)
         </p>
       </div>

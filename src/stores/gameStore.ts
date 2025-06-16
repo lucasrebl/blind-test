@@ -44,9 +44,15 @@ export const useGameStore = defineStore('game', () => {
     return scores.value.reduce((sum, result) => sum + result.score, 0)
   })
   
+  // Dans le store, modifions la propriété calculée isGameOver
   const isGameOver = computed(() => {
     return totalScore.value >= settings.value.maxPoints || 
-      (currentSongIndex.value === playlist.value.length && playlist.value.length > 0)
+      currentSongIndex.value >= playlist.value.length && playlist.value.length > 0
+  })
+  
+  // Ajoutons une propriété pour distinguer le type de fin de jeu
+  const isVictory = computed(() => {
+    return totalScore.value >= settings.value.maxPoints
   })
   
   // Methods
@@ -257,6 +263,7 @@ export const useGameStore = defineStore('game', () => {
     pendingResult.value = null
   }
   
+  // Dans le return, ajoutons isVictory
   return {
     settings,
     availableThemes,
@@ -276,6 +283,7 @@ export const useGameStore = defineStore('game', () => {
     pendingResult,
     totalScore,
     isGameOver,
+    isVictory,  // Ajout de cette propriété
     updateSettings,
     setAvailableThemes,
     setSelectedThemes,
