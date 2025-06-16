@@ -223,28 +223,8 @@ export const useGameStore = defineStore('game', () => {
       artistSimilarity = calculateSimilarity(answer, artist)
     }
     
-    // Also check if the answer contains significant words from title or artist
-    const answerWords = answer.toLowerCase().split(' ').filter(word => word.length >= 3)
-    const titleWords = title.toLowerCase().split(' ').filter(word => word.length >= 3)
-    const artistWords = artist.toLowerCase().split(' ').filter(word => word.length >= 3)
-    
-    // Check for exact word matches based on answer mode
-    let hasExactWordMatch = false
-    
-    if (settings.value.answerMode === 'song' || settings.value.answerMode === 'both') {
-      hasExactWordMatch = hasExactWordMatch || answerWords.some(word => 
-        titleWords.some(titleWord => calculateSimilarity(word, titleWord) >= 90)
-      )
-    }
-    
-    if (settings.value.answerMode === 'artist' || settings.value.answerMode === 'both') {
-      hasExactWordMatch = hasExactWordMatch || answerWords.some(word => 
-        artistWords.some(artistWord => calculateSimilarity(word, artistWord) >= 90)
-      )
-    }
-    
-    return titleSimilarity >= 90 || artistSimilarity >= 90 || 
-           (hasExactWordMatch && answerWords.length > 0 && answer.length >= 4)
+    // Uniquement valider si la similarité globale est >= 90%
+    return titleSimilarity >= 90 || artistSimilarity >= 90
   }
   
   function resetGame() {
