@@ -154,8 +154,9 @@ export const useGameStore = defineStore('game', () => {
   
   // Improved answer matching with 90% similarity requirement
   function calculateSimilarity(str1: string, str2: string): number {
-    const s1 = str1.toLowerCase().replace(/[^\w\s]/g, '').trim()
-    const s2 = str2.toLowerCase().replace(/[^\w\s]/g, '').trim()
+    // Supprimer le texte entre parenthèses
+    const s1 = str1.toLowerCase().replace(/\([^)]*\)/g, '').replace(/[^\w\s]/g, '').trim()
+    const s2 = str2.toLowerCase().replace(/\([^)]*\)/g, '').replace(/[^\w\s]/g, '').trim()
     
     if (s1 === s2) return 100
     

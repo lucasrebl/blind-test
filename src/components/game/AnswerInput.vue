@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted, nextTick } from 'vue'
 import { useGameStore } from '../../stores/gameStore'
 
 const props = defineProps<{
@@ -39,6 +39,35 @@ watch(() => [props.disabled, gameStore.foundCorrectAnswer], ([newDisabled, found
   if (!newDisabled && !foundCorrect && inputRef.value) {
     inputRef.value.focus()
   }
+})
+
+// Fonction helper pour mettre le focus sur l'input
+const focusInput = async () => {
+  await nextTick()
+  if (inputRef.value && !isInputDisabled.value) {
+    inputRef.value.focus()
+    // Force focus en cas de problème avec certains navigateurs
+    setTimeout(() => {
+      inputRef.value?.focus()
+    }, 100)
+  }
+}
+
+// Surveiller les changements de chanson
+watch(() => gameStore.currentSongIndex, () => {
+  focusInput()
+}, { immediate: true })
+
+// Surveiller quand l'input devient disponible
+watch(() => isInputDisabled.value, (newValue) => {
+  if (!newValue) {
+    focusInput()
+  }
+}, { immediate: true })
+
+// Set focus on mount
+onMounted(() => {
+  focusInput()
 })
 
 // Submit answer
