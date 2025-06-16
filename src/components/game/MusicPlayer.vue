@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../../stores/gameStore'
 import Modal from '../ui/Modal.vue'
@@ -20,6 +20,11 @@ const timerInterval = ref<number | null>(null)
 
 // État pour la modal
 const showStopGameModal = ref(false)
+
+// Ajoutons une propriété calculée pour déterminer si on est entre deux chansons
+const isBetweenSongs = computed(() => {
+  return gameStore.timeIsUp && !gameStore.isGameOver;
+});
 
 // Create audio element
 function createAudio() {
@@ -214,16 +219,23 @@ createAudio()
         <span>{{ gameStore.isMuted ? 'Unmute' : 'Mute' }}</span>
       </button>
       
-      <!-- Stop Game button -->
+      <!-- Stop Game button - désactivé entre deux chansons -->
       <button 
         @click="stopGame"
         class="btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 flex items-center space-x-2 text-sm px-4 py-2"
+        :disabled="isBetweenSongs"
+        :class="{'opacity-50 cursor-not-allowed': isBetweenSongs}"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" />
         </svg>
         <span>Stop</span>
       </button>
+    </div>
+    
+    <!-- Indication visuelle pendant la période entre deux chansons -->
+    <div v-if="isBetweenSongs" class="text-sm text-gray-500 text-center mt-3">
+      Loading next song...
     </div>
     
     <!-- Modal de confirmation pour arrêter le jeu -->
