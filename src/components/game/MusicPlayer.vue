@@ -100,6 +100,14 @@ function stopGame() {
   if (confirm('Êtes-vous sûr de vouloir arrêter la partie ? Votre progression sera perdue.')) {
     stopAudio()
     stopTimer()
+    
+    if (audio.value) {
+      audio.value.removeEventListener('loadeddata', playAudio)
+      audio.value.removeEventListener('timeupdate', updateProgress)
+      audio.value.removeEventListener('ended', stopAudio)
+      audio.value = null
+    }
+    
     gameStore.resetGame()
     router.push('/')
   }
