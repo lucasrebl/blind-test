@@ -11,6 +11,18 @@ const timeRemaining = ref(30)
 const gameReady = ref(false)
 const answerTimer = ref<number | null>(null)
 
+// Score affiché qui inclut les points en attente seulement quand le temps est écoulé
+const displayedScore = computed(() => {
+  const baseScore = gameStore.totalScore
+  
+  // Ajouter les points en attente seulement quand le temps est écoulé
+  if (gameStore.timeIsUp && gameStore.pendingScore > 0) {
+    return baseScore + gameStore.pendingScore
+  }
+  
+  return baseScore
+})
+
 // Check if we have songs loaded
 const hasSongs = computed(() => {
   return gameStore.playlist.length > 0
@@ -32,7 +44,7 @@ function updateTimer(time: number) {
   
   // When time runs out, show answer for 10 seconds then move to next song
   if (time === 0 && !gameStore.timeIsUp) {
-    gameStore.timeUp(0)
+    gameStore.timeUp()
     startAnswerTimer()
   }
 }
@@ -87,7 +99,8 @@ onUnmounted(() => {
         <h1 class="text-3xl font-bold text-primary-700 mb-2">Music Blind Test</h1>
         <div class="flex justify-center items-center space-x-4">
           <div class="bg-primary-100 text-primary-800 px-4 py-1 rounded-full">
-            Score: {{ gameStore.totalScore }} / {{ gameStore.settings.maxPoints }}
+            <!-- Utiliser le displayedScore au lieu de gameStore.totalScore -->
+            Score: {{ displayedScore }} / {{ gameStore.settings.maxPoints }}
           </div>
           <div class="bg-secondary-100 text-secondary-800 px-4 py-1 rounded-full">
             Song: {{ gameStore.currentSongIndex }} / {{ gameStore.playlist.length }}

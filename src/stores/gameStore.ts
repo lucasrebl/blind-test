@@ -35,6 +35,11 @@ export const useGameStore = defineStore('game', () => {
     )
   })
   
+  // Stocker les points temporairement pour les afficher plus tard
+  const pendingScore = ref(0);
+  const pendingResult = ref<GameResult | null>(null);
+  
+  // Modification du calcul du score total pour exclure les points en attente
   const totalScore = computed(() => {
     return scores.value.reduce((sum, result) => sum + result.score, 0)
   })
@@ -85,10 +90,11 @@ export const useGameStore = defineStore('game', () => {
     foundCorrectAnswer.value = true
     correctAnswerTime.value = timeRemaining
     
-    // Ajouter immédiatement le score lorsque la réponse est correcte
+    // Au lieu d'ajouter immédiatement le score, on le stocke pour plus tard
     if (currentSong.value) {
       const score = getCurrentScore(timeRemaining)
-      scores.value.push({
+      pendingScore.value = score;
+      pendingResult.value = {
         songId: currentSong.value.id,
         songTitle: currentSong.value.title,
         artistName: currentSong.value.artist.name,
@@ -96,7 +102,8 @@ export const useGameStore = defineStore('game', () => {
         isCorrect: true,
         score: score,
         timeRemaining: timeRemaining
-      })
+      };
+      // Ne pas ajouter immédiatement à scores.value
     }
   }
   
@@ -104,9 +111,14 @@ export const useGameStore = defineStore('game', () => {
     timeIsUp.value = true
     isPlaying.value = false
     
+    // À la fin du timer, on ajoute les points au score
     if (currentSong.value) {
-      // Si la réponse correcte a déjà été trouvée, ne pas ajouter de points supplémentaires
-      if (!foundCorrectAnswer.value) {
+      if (foundCorrectAnswer.value && pendingResult.value) {
+        // Ajouter les points en attente au score total
+        scores.value.push(pendingResult.value);
+        pendingScore.value = 0;
+        pendingResult.value = null;
+      } else if (!foundCorrectAnswer.value) {
         // Aucune réponse correcte n'a été trouvée, score = 0
         scores.value.push({
           songId: currentSong.value.id,
@@ -116,10 +128,7 @@ export const useGameStore = defineStore('game', () => {
           isCorrect: false,
           score: 0,
           timeRemaining: 0
-        })
-      } else {
-        // La réponse correcte a déjà été enregistrée avec markCorrectAnswer,
-        // ne pas ajouter d'entrée de score ici
+        });
       }
     }
   }
@@ -243,6 +252,8 @@ export const useGameStore = defineStore('game', () => {
     foundCorrectAnswer.value = false
     correctAnswerTime.value = 0
     isMuted.value = false
+    pendingScore.value = 0
+    pendingResult.value = null
   }
   
   return {
@@ -260,6 +271,8 @@ export const useGameStore = defineStore('game', () => {
     correctAnswerTime,
     isMuted,
     selectedThemes,
+    pendingScore,
+    pendingResult,
     totalScore,
     isGameOver,
     updateSettings,
